@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Shopfloor Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+  <div class="header">
+    <h1 id="txt-app-title">Shopfloor System</h1>
+    <p id="txt-app-subtitle">Silakan masukkan PIN otorisasi Anda.</p>
+    <button id="btn-logout" class="btn-logout" onclick="logoutAplikasi()">Keluar / Ganti PIN</button>
+  </div>
+
+  <div id="sec-login" class="card-section" style="display: block;">
+    <label for="input-pin">Masukkan PIN Otorisasi Anda (4 Angka):</label>
+    <input type="password" id="input-pin" inputmode=\"numeric\" pattern="[0-9]*" placeholder="Ketik PIN Anda..." onkeyup="cekPINPanjangKarakter()" />
+    <button id="btn-login-submit" class="btn btn-primary" style="margin-top: 10px;" onclick="verifikasiPINKeBackend()">Verifikasi & Masuk ➔</button>
+    <p id="txt-login-loading" style="font-size:12px; color:#666; display:none; margin-top:8px; text-align:center;">⌛ Memverifikasi hak akses...</p>
+  </div>
+
+  <div id="sec-filter" class="card-section" style="display: none;">
+    <h2 style="font-size: 14px; margin-bottom: 12px; color: #002140;" id="title-operator-welcome">Metadata Operator</h2>
+    
+    <div class="form-group">
+      <label for="select-batch">1. Pilih / Cari Nomor Batch Aktif:</label>
+      <select id="select-batch">
+        <option value="" disabled selected>-- Memuat Batch Aktif... --</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="select-subbrand">2. Pilih / Cari Subbrand Master:</label>
+      <select id="select-subbrand">
+        <option value="" disabled selected>-- Memuat Resep... --</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="select-mesin">3. Pilih / Cari Nama Mesin / Proses:</label>
+      <select id="select-mesin" onchange="evaluasiKondisiMesinBagiRawMaterial()">
+        <option value="" disabled selected>-- Pilih Proses Mesin --</option>
+        <option value="Mixing Serbuk">Mixing Serbuk</option>
+        <option value="Mixing Liquid">Mixing Liquid</option>
+        <option value="Filling Line 1">Filling Line 1</option>
+        <option value="Packing Manual">Packing Manual</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="select-no-mesin">4. Nomor Mesin / Line Indikator:</label>
+      <select id="select-no-mesin">
+        <option value="" disabled selected>-- Pilih Nomor/Line --</option>
+        <option value="1">Line 1</option>
+        <option value="2">Line 2</option>
+        <option value="3">Line 3</option>
+        <option value="4">Line 4</option>
+        <option value="5">Line 5</option>
+      </select>
+    </div>
+
+    <div id="container-tombol-rm" style="display: none; background: #fff7e6; border: 1px dashed #fa8c16; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+      <p style="margin: 0 0 8px 0; font-size: 9pt; color: #b75100; font-weight: 600;">⚠️ Terdeteksi Proses Mixing! Mohon lengkapi timbangan bahan:</p>
+      <button type="button" class="btn btn-warning" style="width:100%;" id="btn-buka-rm" onclick="bukaModalRawMaterial()">⚖️ Isi Konsumsi Raw Material Batch Ini</button>
+    </div>
+
+    <div id="container-modul-kit" style="display: none; border-top: 2px solid #e8e8e8; padding-top: 15px; margin-top: 15px;">
+      <div style="background: #e6f7ff; border: 1px solid #91d5ff; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 9pt; color: #0050b3; font-weight: 600;">
+        📦 Komponen Silsilah Produk Kit:
+      </div>
+      <div id="list-input-kit"></div>
+    </div>
+
+    <button id="btn-filter-next" class="btn btn-primary" style="margin-top: 10px;" onclick="kunciMetadataDanLanjutKeForm()">Mulai Catat Aktivitas Lini ➔</button>
+  </div>
+
+  <div id="sec-form" class="card-section" style="display: none;">
+    <div id="panel-meta-summary" class="meta-summary-banner">
+      </div>
+
+    <h2 style="font-size: 13px; margin-bottom: 10px; color: #333;">5. Pilih Status Aktivitas Saat Ini:</h2>
+    <div class="status-toggle-grid" id="container-status-buttons">
+      </div>
+
+    <div id="panel-oee-inputs" style="display: none; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+      <h3 style="font-size:12px; margin-bottom:12px; color:#1890ff;">📋 Form Rekapitulasi Akhir / Tutup Batch OEE</h3>
+      
+      <div class="form-group-horizontal">
+        <div>
+          <label>Nama SPV Lapangan:</label>
+          <input type="text" id="oee-spv" placeholder="Ketik nama SPV...">
+        </div>
+        <div>
+          <label>Tanggal Produksi:</label>
+          <input type="date" id="oee-tanggal">
+        </div>
+      </div>
+
+      <div class="form-group-horizontal">
+        <div>
+          <label>Area Kerja:</label>
+          <input type="text" id="oee-area" readonly>
+        </div>
+        <div>
+          <label>Varian Produk:</label>
+          <input type="text" id="oee-varian" readonly>
+        </div>
+      </div>
+
+      <div class="form-group-horizontal">
+        <div>
+          <label>Jam Mulai Aktual:</label>
+          <input type="time" id="oee-jam-mulai">
+        </div>
+        <div>
+          <label>Jam Selesai Aktual:</label>
+          <input type="time" id="oee-jam-selesai">
+        </div>
+      </div>
+
+      <div class="form-group-horizontal">
+        <div>
+          <label>Istirahat (Menit):</label>
+          <input type="number" id="oee-istirahat" placeholder="0" min="0">
+        </div>
+        <div>
+          <label>Capaian Bagus (Pcs):</label>
+          <input type="number" id="oee-capaian" placeholder="0" min="0">
+        </div>
+      </div>
+
+      <div class="form-group-horizontal">
+        <div>
+          <label>Man Power (Orang):</label>
+          <input type="number" id="oee-mp" placeholder="0" min="0">
+        </div>
+        <div>
+          <label>Kemas Rusak (Pcs):</label>
+          <input type="number" id="oee-rusak" placeholder="0" min="0">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Alasan Kemas Rusak / Reject:</label>
+        <input type="text" id="oee-alasan-rusak" placeholder="Sebutkan kendala reject kemasan...">
+      </div>
+    </div>
+
+    <button class="btn btn-success" style="margin-top: 15px;" onclick="kirimDataKeSpreadsheetServer()">🚀 Kirim Data Ke Server</button>
+    <button class="btn" style="background:#f0f0f0; color:#333; margin-top: 8px; font-size:12px;" onclick="kembaliKeFilter()">⬅ Kembali</button>
+  </div>
+
+  <div id="sec-history" style="display: none;">
+    <h3 style="font-size: 13px; font-weight: 700; color: #444; display: flex; justify-content: space-between; align-items: center;">
+      <span>📜 Riwayat Input Shift Ini</span>
+      <button onclick="clearHistoryLokal()" style="font-size: 10px; background: none; border: none; color: #ff4d4f; cursor: pointer; font-weight:600;">Hapus Log</button>
+    </h3>
+    
+    <div class="table-scroll-container">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th style="width: 15%;">Jam</th>
+            <th style="width: 25%;">No Batch</th>
+            <th style="width: 25%;">Mesin / Line</th>
+            <th style="width: 22%;">Info</th>
+            <th style="width: 13%; text-align: center;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="history-table-body">
+          </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-rm">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="judul-modal-rm">Form Konsumsi Raw Material</h3>
+      <button class="btn-delete-modal" onclick="tutupModalRawMaterial()">&times;</button>
+    </div>
+    
+    <table class="rm-table">
+      <thead>
+        <tr>
+          <th style="width: 65%;">Nama Raw Material</th>
+          <th style="width: 25%;">Qty (Kg)</th>
+          <th style="width: 10%; text-align: center;">Hapus</th>
+        </tr>
+      </thead>
+      <tbody id="body-tabel-rm">
+        </tbody>
+    </table>
+
+    <button type="button" class="btn btn-add-row" onclick="tambahBarisBahanBakuManual('', 0)">➕ Tambah Bahan Baku Tambahan / Substitusi</button>
+    
+    <div style="margin-top: 20px; border-top: 1px solid #e8e8e8; padding-top: 15px; text-align: right;">
+      <button type="button" class="btn btn-success" style="width: 120px;" onclick="simpanFormRawMaterialKeMemori()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
