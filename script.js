@@ -69,50 +69,67 @@ function cekPINPanjangKarakter() {
 // =========================================================================
 // 🔐 DATABASE PIN OTORISASI LOKAL (UNTUK MODE SIMULASI & SANDBOX)
 // =========================================================================
+// =========================================================================
+// 🔐 DATABASE PIN OTORISASI LOKAL (UNTUK MODE SIMULASI & SANDBOX)
+// =========================================================================
 const DATABASE_PIN_LOKAL = {
   "1234": { nama: "Makata Aldian", role: "SIC" },
   "5678": { nama: "Budi Santoso", role: "OEE" },
-  "9999": { nama: "Rizky Nugraha", role: "PACKING" }, // Tambahan role jika ingin tes kit
+  "9999": { nama: "Rizky Nugraha", role: "PACKING" },
   "1111": { nama: "Tim QC Utama", role: "QC" }
 };
 
+// Pastikan fungsi pendeteksi ketikan ini dibuat bersih tanpa tabrakan eksekusi
+function cekPINPanjangKarakter() {
+  const pinVal = document.getElementById('input-pin').value.trim();
+  if(pinVal.length === 4) {
+    document.getElementById('input-pin').blur(); // Lepas fokus keyboard otomatis
+    verifikasiPINKeBackend();
+  }
+}
+
 function verifikasiPINKeBackend() {
-  const pinInput = document.getElementById('input-pin').value;
+  const pinInput = document.getElementById('input-pin').value.trim(); // Ambil nilai murni tanpa spasi pembatas
+  
   if(!pinInput) {
     alert("Silakan ketik PIN Anda!");
     return;
   }
   
+  // Sembunyikan tombol sementara agar tidak diklik dua kali oleh operator
+  document.getElementById('btn-login-submit').style.display = "none";
   document.getElementById('txt-login-loading').style.display = "block";
   
-  // SIMULASI DELAY 0.5 DETIK AGAR TERASA SEPERTI SISTEM ASLI
+  // Simulasi jeda autentikasi lokal demi kenyamanan visual operator (0.3 detik)
   setTimeout(() => {
     document.getElementById('txt-login-loading').style.display = "none";
     
-    // Cek apakah PIN terdaftar di database lokal kita
+    // Validasi pengecekan ke database objek lokal
     if (DATABASE_PIN_LOKAL[pinInput]) {
       const userTerdeteksi = DATABASE_PIN_LOKAL[pinInput];
       
-      // Ambil data nama dan role dari objek lokal
       userActive.nama = userTerdeteksi.nama;
       userActive.role = userTerdeteksi.role;
       
-      // Ubah tampilan visual dashboard sesuai hak akses
+      // Update antarmuka visual dashboard
       document.getElementById('title-operator-welcome').innerText = `Metadata Operator: ${userActive.nama} (${userActive.role})`;
       document.getElementById('sec-login').style.display = "none";
       document.getElementById('sec-filter').style.display = "block";
       document.getElementById('sec-history').style.display = "block";
+      document.getElementById('btn-logout').style.display = "block"; // Munculkan tombol keluar
       
       document.getElementById('txt-app-subtitle').innerText = `Selamat bekerja, silakan lengkapi identitas penugasan shift Anda.`;
       
-      // Load pilihan dropdown data lokal/server
+      // Jalankan fungsi load dropdown simulasi lokal
       loadDaftarBatchDanSubbrandDariServer();
       renderHistoryTable();
     } else {
-      alert("PIN Otorisasi Lokal Salah atau Tidak Terdaftar! Coba gunakan PIN: 1234 atau 5678");
+      // Jika salah, kembalikan posisi tombol login semula
+      alert("PIN Otorisasi Lokal Salah atau Tidak Terdaftar!\n\nGunakan PIN Uji Coba:\n➔ 1234 (SIC)\n➔ 5678 (OEE)");
       document.getElementById('input-pin').value = "";
+      document.getElementById('btn-login-submit').style.display = "block";
     }
-  }, 500);
+  }, 300);
 }
 function loadDaftarBatchDanSubbrandDariServer() {
   // SUNTIK DATA BATCH & SUBBRAND SECARA LOKAL UNTUK SIMULASI SANDBOX
