@@ -153,10 +153,13 @@ function loadDaftarBatchDanSubbrandDariServer() {
   selSub.addEventListener('change', handlePerubahanSubbrandTrigger);
 }
 // LOGIKA SUNTIK OTOMATIS BERDASARKAN SUBBRAND PILIHAN (PERTANYAAN NO 2)
+// =========================================================================
+// 1. REVISI UTAMA: SIMPAN STRUKTUR KIT SAAT SUBBRAND DIPILIH (TAPI TETAP HIDDEN)
+// =========================================================================
 function handlePerubahanSubbrandTrigger() {
   const subbrandVal = this.value;
   
-  // Reset data Timbangan Raw Material
+  // A. Reset & Kosongkan Data Timbangan Raw Material (Lini Mixing)
   dataTimbanganRM_Tersimpan = [];
   statusRM_SudahIsi = false;
   const btnRM = document.getElementById('btn-buka-rm');
@@ -171,15 +174,13 @@ function handlePerubahanSubbrandTrigger() {
     tambahBarisBahanBakuManual(bahan);
   });
 
-  // Logika Menggelar Pertanyaan Kit untuk Tim Packing (Kasus 2)
-  const containerKit = document.getElementById('container-modul-kit');
+  // B. Rakit Kerangka Pertanyaan Kit di Latar Belakang (Belum Dimunculkan ke Layar)
   const listInputKit = document.getElementById('list-input-kit');
   const daftarKit = MASTER_PRODUCT_KIT[subbrandVal] || [];
 
+  listInputKit.innerHTML = ""; // Bersihkan isi lama
+  
   if(daftarKit.length > 0) {
-    containerKit.style.display = "block";
-    listInputKit.innerHTML = "";
-    
     daftarKit.forEach(namaKit => {
       const uniqueId = namaKit.replace(/\s+/g, '-').toLowerCase();
       const div = document.createElement('div');
@@ -196,19 +197,41 @@ function handlePerubahanSubbrandTrigger() {
       `;
       listInputKit.appendChild(div);
     });
-  } else {
-    containerKit.style.display = "none";
   }
+  
+  // Jalankan evaluasi ulang mesin secara instan jika user mengganti subbrand di tengah jalan
+  evaluasiKondisiMesinBagiRawMaterialDanKit();
 }
 
+// =========================================================================
+// 2. REVISI UTAMA: EVALUASI PERTANYAAN NO 3 (DOUBLE-TRIGGER MIXING & PACKING)
+// =========================================================================
 function evaluasiKondisiMesinBagiRawMaterial() {
+  // Alihkan fungsi lama Anda ke fungsi evaluasi gabungan yang baru
+  evaluasiKondisiMesinBagiRawMaterialDanKit();
+}
+
+function evaluasiKondisiMesinBagiRawMaterialDanKit() {
   const mesinVal = document.getElementById('select-mesin').value.toLowerCase();
-  const boxTombolRM = document.getElementById('container-tombol-rm');
+  const subbrandVal = document.getElementById('select-subbrand').value;
   
+  const boxTombolRM = document.getElementById('container-tombol-rm');
+  const containerKit = document.getElementById('container-modul-kit');
+  
+  // 🧪 KONDISI A: Tampilkan Tombol Raw Material jika Mesin = "Mixing" & Role = "SIC"
   if (mesinVal.includes('mixing') && userActive.role === 'SIC') {
     boxTombolRM.style.display = "block";
   } else {
     boxTombolRM.style.display = "none";
+  }
+  
+  // 📦 KONDISI B: Tampilkan Modul Kit HANYA JIKA Mesin = "Packing" & Subbrand tersebut memiliki daftar komponen kit
+  const daftarKit = MASTER_PRODUCT_KIT[subbrandVal] || [];
+  
+  if (mesinVal.includes('packing') && daftarKit.length > 0) {
+    containerKit.style.display = "block";
+  } else {
+    containerKit.style.display = "none";
   }
 }
 
