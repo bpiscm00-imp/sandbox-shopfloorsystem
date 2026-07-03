@@ -66,6 +66,16 @@ function cekPINPanjangKarakter() {
   }
 }
 
+// =========================================================================
+// 🔐 DATABASE PIN OTORISASI LOKAL (UNTUK MODE SIMULASI & SANDBOX)
+// =========================================================================
+const DATABASE_PIN_LOKAL = {
+  "1234": { nama: "Makata Aldian", role: "SIC" },
+  "5678": { nama: "Budi Santoso", role: "OEE" },
+  "9999": { nama: "Rizky Nugraha", role: "PACKING" }, // Tambahan role jika ingin tes kit
+  "1111": { nama: "Tim QC Utama", role: "QC" }
+};
+
 function verifikasiPINKeBackend() {
   const pinInput = document.getElementById('input-pin').value;
   if(!pinInput) {
@@ -75,34 +85,35 @@ function verifikasiPINKeBackend() {
   
   document.getElementById('txt-login-loading').style.display = "block";
   
-  fetch(`${WEB_APP_URL}?action=login&pin=${pinInput}`)
-    .then(res => res.json())
-    .then(res => {
-      document.getElementById('txt-login-loading').style.display = "none";
-      if(res.status === "SUCCESS") {
-        userActive.nama = res.nama;
-        userActive.role = res.role;
-        
-        document.getElementById('title-operator-welcome').innerText = `Metadata Operator: ${userActive.nama} (${userActive.role})`;
-        document.getElementById('sec-login').style.display = "none";
-        document.getElementById('sec-filter').style.display = "block";
-        document.getElementById('sec-history').style.display = "block";
-        
-        document.getElementById('txt-app-subtitle').innerText = `Selamat bekerja, silakan lengkapi identitas penugasan shift Anda.`;
-        
-        loadDaftarBatchDanSubbrandDariServer();
-        renderHistoryTable();
-      } else {
-        alert("PIN Otorisasi Salah atau Tidak Terdaftar!");
-        document.getElementById('input-pin').value = "";
-      }
-    })
-    .catch(err => {
-      document.getElementById('txt-login-loading').style.display = "none";
-      alert("Gagal terhubung ke server PIN. Periksa jaringan Anda!");
-    });
+  // SIMULASI DELAY 0.5 DETIK AGAR TERASA SEPERTI SISTEM ASLI
+  setTimeout(() => {
+    document.getElementById('txt-login-loading').style.display = "none";
+    
+    // Cek apakah PIN terdaftar di database lokal kita
+    if (DATABASE_PIN_LOKAL[pinInput]) {
+      const userTerdeteksi = DATABASE_PIN_LOKAL[pinInput];
+      
+      // Ambil data nama dan role dari objek lokal
+      userActive.nama = userTerdeteksi.nama;
+      userActive.role = userTerdeteksi.role;
+      
+      // Ubah tampilan visual dashboard sesuai hak akses
+      document.getElementById('title-operator-welcome').innerText = `Metadata Operator: ${userActive.nama} (${userActive.role})`;
+      document.getElementById('sec-login').style.display = "none";
+      document.getElementById('sec-filter').style.display = "block";
+      document.getElementById('sec-history').style.display = "block";
+      
+      document.getElementById('txt-app-subtitle').innerText = `Selamat bekerja, silakan lengkapi identitas penugasan shift Anda.`;
+      
+      // Load pilihan dropdown data lokal/server
+      loadDaftarBatchDanSubbrandDariServer();
+      renderHistoryTable();
+    } else {
+      alert("PIN Otorisasi Lokal Salah atau Tidak Terdaftar! Coba gunakan PIN: 1234 atau 5678");
+      document.getElementById('input-pin').value = "";
+    }
+  }, 500);
 }
-
 function loadDaftarBatchDanSubbrandDariServer() {
   fetch(`${WEB_APP_URL}?action=getMetadataMaster`)
     .then(res => res.json())
