@@ -115,27 +115,26 @@ function verifikasiPINKeBackend() {
   }, 500);
 }
 function loadDaftarBatchDanSubbrandDariServer() {
-  fetch(`${WEB_APP_URL}?action=getMetadataMaster`)
-    .then(res => res.json())
-    .then(data => {
-      const selBatch = document.getElementById('select-batch');
-      selBatch.innerHTML = `<option value="" disabled selected>-- Pilih Nomor Batch --</option>`;
-      data.batches.forEach(b => {
-        selBatch.innerHTML += `<option value="${b}">${b}</option>`;
-      });
-      
-      const selSub = document.getElementById('select-subbrand');
-      selSub.innerHTML = `<option value="" disabled selected>-- Pilih Subbrand Master --</option>`;
-      data.subbrands.forEach(s => {
-        selSub.innerHTML += `<option value="${s}">${s}</option>`;
-      });
+  // SUNTIK DATA BATCH & SUBBRAND SECARA LOKAL UNTUK SIMULASI SANDBOX
+  const mockBatches = ["BATCH-ES-001", "BATCH-LC-042", "BATCH-XAU99"];
+  const mockSubbrands = ["IMP EYE SHADOW 11 COLOUR", "IMP LIP CREAM MATTE CAROLINA", "IMP SINGLE PIGMEN"];
+  
+  const selBatch = document.getElementById('select-batch');
+  selBatch.innerHTML = `<option value="" disabled selected>-- Pilih Nomor Batch --</option>`;
+  mockBatches.forEach(b => {
+    selBatch.innerHTML += `<option value="${b}">${b}</option>`;
+  });
+  
+  const selSub = document.getElementById('select-subbrand');
+  selSub.innerHTML = `<option value="" disabled selected>-- Pilih Subbrand Master --</option>`;
+  mockSubbrands.forEach(s => {
+    selSub.innerHTML += `<option value="${s}">${s}</option>`;
+  });
 
-      // Tambahkan event trigger otomatis saat subbrand berubah
-      selSub.removeEventListener('change', handlePerubahanSubbrandTrigger);
-      selSub.addEventListener('change', handlePerubahanSubbrandTrigger);
-    });
+  // Pasang ulang trigger otomatis resep
+  selSub.removeEventListener('change', handlePerubahanSubbrandTrigger);
+  selSub.addEventListener('change', handlePerubahanSubbrandTrigger);
 }
-
 // LOGIKA SUNTIK OTOMATIS BERDASARKAN SUBBRAND PILIHAN (PERTANYAAN NO 2)
 function handlePerubahanSubbrandTrigger() {
   const subbrandVal = this.value;
